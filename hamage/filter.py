@@ -140,6 +140,11 @@ class FilterGraph(object):
         # The handler used to reject content.
         self.reject_handler = self
 
+        # Persistence system for storing entries, ... what else?
+        # TODO: this should be an entry point passed by config?
+        from .backends.django_hamage.models import BackendFactory
+        self.backend_factory = BackendFactory
+
     # IRejectHandler methods
     def reject_content(self, req, message):
         raise RejectContent(message)
@@ -281,12 +286,16 @@ class FilterGraph(object):
         return '\n'.join(buf)
 
     ###########################################################
-    # TO DO: persistent logging of requests.
+    # Persistent logging of requests.
+
     def log_entry(self, *args, **kw):
-        pass
+        self.backend_factory.make_entry(*args, **kw)
+
 
     def purge_log_entries(self, age):
-        pass
+        self.backend_factory.purge_entries(age)
+
 
     def get_log_entry(self, id):
-        raise NotImplementedError("TODO")
+        return self.backend_factory.get(id)
+
