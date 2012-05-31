@@ -1,4 +1,5 @@
 import unittest
+import mock
 
 class TestFilterGraph(unittest.TestCase):
 
@@ -9,10 +10,11 @@ class TestFilterGraph(unittest.TestCase):
 
     def _make_one(self):
         from hamage.filter import FilterGraph
-        return FilterGraph({'spam-filter': {}})
+        return FilterGraph({'options': {}})
 
     def test_no_filters(self):
         graph = self._make_one()
+        graph._backend_factory = mock.Mock()
         req = self._request(host='example.org')
         graph.strategies = []
         retval = graph.test(req, 'John Doe', [(None, 'Foo bar')], '127.0.0.1')

@@ -28,10 +28,12 @@ def shorten_line(text, maxlen=75):
 class Request(object):
     """
     TODO: what do we actually need here?
+    maybe see http://packages.python.org/twod.wsgi/manual/request-objects.html
+    for django compatibility?
     """
     def __init__(self, environ, headers):
-        self.environ = environ
-        self.headers = {}
+        self.environ = environ  # The WSGI environment.
+        self.headers = {}  # HTTP headers
         for key, val in headers.items():
             self.headers[key.lower()] = key
 
@@ -75,6 +77,7 @@ class ExternalLinksFilterStrategy(object):
         return False
 
     def test(self, req, author, content, ip):
+        req = self.request_wrapper(req)
         num_ext = 0
         allowed = self.allowed_domains.copy()
         allowed.add(req.get_header('Host'))
@@ -102,6 +105,12 @@ class ExternalLinksFilterStrategy(object):
 class FilterGraph(object):
 
 
+    def request_wrapper(self, request):
+        """Subclasses can override this to adapt a framework-native request
+        implementation into something compatible with our Request class.
+        """
+        return request
+
     def __init__(self, config):
         self.log = logger
 
@@ -109,7 +118,7 @@ class FilterGraph(object):
         # http://stackoverflow.com/questions/774824/explain-python-entry-points
         self.strategies = [ExternalLinksFilterStrategy(config)]
 
-        config = config['spam-filter']
+        config = config['options']
 
         # The minimum score required for a submission to be allowed
         self.min_karma = int(config.get('min_karma', 0))
@@ -139,11 +148,17 @@ class FilterGraph(object):
 
         # The handler used to reject content.
         self.reject_handler = self
+        self._backend_factory = None
 
-        # Persistence system for storing entries, ... what else?
-        # TODO: this should be an entry point passed by config?
-        from .backends.django_hamage.models import BackendFactory
-        self.backend_factory = BackendFactory
+    @property
+    def backend_factory(self):
+        """Persistence system for storing entries, ... what else?
+         TODO: this should be an entry point passed by config?
+         """
+        if self._backend_factory is None:
+            from .backends.django_hamage.models import DjangoBackendFactory
+            self._backend_factory = DjangoBackendFactory
+        return self._backend_factory
 
     # IRejectHandler methods
     def reject_content(self, req, message):
@@ -162,6 +177,7 @@ class FilterGraph(object):
             the newly submitted content
         @param ip: the submitters IP
         """
+        req = self.request_wrapper(req)
         score = 0
         if self.trust_authenticated:
             # Authenticated users are trusted
