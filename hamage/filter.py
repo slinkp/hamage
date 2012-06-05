@@ -14,12 +14,12 @@ def to_unicode(s, charset=None):
         overrideEncodings = []
     return UnicodeDammit(s, overrideEncodings=overrideEncodings).unicode
 
-
 def shorten_line(text, maxlen=75):
     # Swiped from Trac.
     if len(text or '') < maxlen:
         return text
     cut = max(text.rfind(' ', 0, maxlen), text.rfind('\n', 0, maxlen))
+
     if cut < 0:
         cut = maxlen
     return text[:cut] + ' ...'
@@ -34,12 +34,15 @@ class Request(object):
     def __init__(self, environ, headers):
         self.environ = environ  # The WSGI environment.
         self.headers = {}  # HTTP headers
-        for key, val in headers.items():
-            self.headers[key.lower()] = key
+        for key, value in headers.items():
+            self.headers[key.lower()] = value
 
-    # For compatibility w/ trac code; deprecate this
-    def get_header(self, key):
-        return self.headers[key.lower()]
+    @classmethod
+    def from_wsgi_environ(kls, environ):
+        """Factory to create a Request from a WSGI environment.
+        """
+        headers = dict([(key, val) for key, val in environ.items() if key.startswith('HTTP_')])
+        return kls(environ, headers)
 
     # Making this up, TODO
     def has_attachment(self):
@@ -47,6 +50,12 @@ class Request(object):
 
     #######################################
     # Trac compatibility. TODO
+
+    # For compatibility w/ trac code; deprecate this
+    def get_header(self, key):
+        key = 'http_' + key.lower()
+        return self.headers[key]
+
     @property
     def authname(self):
         return 'anonymous'
@@ -77,7 +86,8 @@ class ExternalLinksFilterStrategy(object):
         return False
 
     def test(self, req, author, content, ip):
-        req = self.request_wrapper(req)
+        # TODO: req, author, content
+        import pdb; pdb.set_trace()
         num_ext = 0
         allowed = self.allowed_domains.copy()
         allowed.add(req.get_header('Host'))
@@ -150,6 +160,9 @@ class FilterGraph(object):
         self.reject_handler = self
         self._backend_factory = None
 
+        # Whether to check x-forwarded-for headers.
+        self.isforwarded = bool(config.get('is_forwarded'))
+
     @property
     def backend_factory(self):
         """Persistence system for storing entries, ... what else?
@@ -164,8 +177,16 @@ class FilterGraph(object):
     def reject_content(self, req, message):
         raise RejectContent(message)
 
+    def _get_ip(self, req):
+        if self.isforwarded:
+            x_forwarded = req.headers.get('x-forwarded-for')
+            if x_forwarded and x_forwarded != '':
+                return x_forwarded.split(',',1)[0]
+        return req.environ['REMOTE_ADDR']
+
+
     # Public methods
-    def test(self, req, author, changes, ip):
+    def test(self, req, author, changes):
         """Test a submission against the registered filter strategies.
         
         @param req: the request object
@@ -183,6 +204,8 @@ class FilterGraph(object):
             # Authenticated users are trusted
             if req.authname and req.authname != 'anonymous':
                 return
+
+        ip = self._get_ip(req)
 
         reasons = []
         if req.authname and req.authname != 'anonymous':
@@ -231,10 +254,11 @@ class FilterGraph(object):
 
 
         if score < self.min_karma:
+            ip = self._get_ip(req)
             self.log.warn('Rejecting submission %r by "%s" (%r) because it '
                           'earned only %d karma points (%d are required) for '
                           'the following reason(s): %r', abbrev, author,
-                          req.remote_addr, score, self.min_karma,
+                          ip, score, self.min_karma,
                           ['%s: (%s) %s' % r for r in reasons])
             msg = ', '.join([r[2] for r in reasons if r[1] < 0])
             if msg:
@@ -284,6 +308,10 @@ class FilterGraph(object):
         for old_content, new_content in changes:
             new_content = to_unicode(new_content)
             if old_content:
+                # If the user is editing content, we only really want
+                # to test their new content;
+                # unchanged and presumably already-approved content
+                # would spuriously increase their ham score.
                 old_content = to_unicode(old_content)
                 new_content = self._get_added_lines(old_content, new_content)
             fields.append(new_content)
