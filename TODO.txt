@@ -1,0 +1,33 @@
+* library API to call filters - DONE
+ - tests - DONE
+
+* wsgi middleware to invoke filters - DONE
+ - tests - DONE
+
+* use webob - DONE
+  - tests - DONE
+
+* django proof of concept basic backend
+  - persistent LogEntry - DONE
+  - django.contrib.comments support - DONE
+
+* wsgi form integration. guinea pig: the captcha/expression.py filter
+ - tests
+
+* config the filter chain
+  - manually at instantiation
+  - django settings
+  - pyramid (paste ini file?)
+
+* get more filters working
+  - with logs
+  - with tests
+
+* think about middleware working w/ AJAX
+
+* pyramid version of example app
+
+* Training - PUNT
+
+* Log / training UI in django admin - PUNT
+
