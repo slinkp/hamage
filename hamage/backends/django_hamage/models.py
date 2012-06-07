@@ -13,24 +13,25 @@ import time
 
 class HamageEntry(models.Model):
 
-    timestamp = models.DateTimeField()
+    time = models.DateTimeField()
 
     path = models.CharField(max_length=2000)
 
     author = models.CharField(max_length=256)
 
-    is_authenticated = models.BooleanField()
+    authenticated = models.BooleanField()
 
-    ip = models.CharField(max_length=40)
+    ipnr = models.CharField(max_length=40)
 
     content = models.TextField()
 
     headers = models.TextField()
 
-    is_spam = models.BooleanField()
+    rejected = models.BooleanField(help_text="Is it spam?")
 
     score = models.IntegerField()
 
+    # Todo: allow assigning & returning a list
     reasons = models.TextField(help_text="json-encoded list of reasons this was ham/spam", blank=True, null=True)
 
 
