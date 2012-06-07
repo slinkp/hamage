@@ -28,11 +28,13 @@ def shorten_line(text, maxlen=75):
 class Request(object):
     """
     TODO: what do we actually need here?
+    Use webob instead?
     maybe see http://packages.python.org/twod.wsgi/manual/request-objects.html
     for django compatibility?
     """
     def __init__(self, environ, headers):
-        self.environ = environ  # The WSGI environment.
+        headers = headers or {}
+        self.environ = environ.copy()  # The WSGI environment.
         self.headers = {}  # HTTP headers
         for key, value in headers.items():
             self.headers[key.lower()] = value
@@ -58,13 +60,17 @@ class Request(object):
 
     @property
     def authname(self):
-        return 'anonymous'
+        # TODO: this should also be pluggable?
+        # REMOTE_USER works with eg. repoze.who, but
+        # our application may well do something different.
+        return self.environ.get('REMOTE_USER') or 'anonymous'
 
     path_info = ''
 
 
 class RejectContent(Exception):
     """Exception raised when content is rejected by a filter."""
+
 
 class ExternalLinksFilterStrategy(object):
     """Spam filter strategy that reduces the karma of a submission if the
@@ -86,8 +92,6 @@ class ExternalLinksFilterStrategy(object):
         return False
 
     def test(self, req, author, content, ip):
-        # TODO: req, author, content
-        import pdb; pdb.set_trace()
         num_ext = 0
         allowed = self.allowed_domains.copy()
         allowed.add(req.get_header('Host'))
@@ -111,9 +115,7 @@ class ExternalLinksFilterStrategy(object):
         pass
 
 
-
 class FilterGraph(object):
-
 
     def request_wrapper(self, request):
         """Subclasses can override this to adapt a framework-native request
@@ -188,7 +190,8 @@ class FilterGraph(object):
     # Public methods
     def test(self, req, author, changes):
         """Test a submission against the registered filter strategies.
-        
+        Returns (score, [reasons]) or raises RejectContent.
+
         @param req: the request object
         @param author: the name of the logged in user, or 'anonymous' if the
             user is not logged in
@@ -203,7 +206,7 @@ class FilterGraph(object):
         if self.trust_authenticated:
             # Authenticated users are trusted
             if req.authname and req.authname != 'anonymous':
-                return
+                return (float('inf'), ['trusting authenticated user'])
 
         ip = self._get_ip(req)
 
@@ -265,6 +268,7 @@ class FilterGraph(object):
                 msg = ' (%s)' % msg
             self.reject_handler.reject_content(req, 'Submission rejected as '
                                                'potential spam %s' % msg)
+        return score, reasons
 
     def train(self, req, log_id, spam=True):
         environ = {}
@@ -304,20 +308,21 @@ class FilterGraph(object):
     # Internal methods
 
     def _combine_changes(self, changes, sep='\n\n'):
+        # If the user is editing content, we only really want
+        # to test their new content;
+        # unchanged and presumably already-approved content
+        # would spuriously increase their ham score.
         fields = []
         for old_content, new_content in changes:
             new_content = to_unicode(new_content)
             if old_content:
-                # If the user is editing content, we only really want
-                # to test their new content;
-                # unchanged and presumably already-approved content
-                # would spuriously increase their ham score.
                 old_content = to_unicode(old_content)
                 new_content = self._get_added_lines(old_content, new_content)
             fields.append(new_content)
         return sep.join(fields)
 
     def _get_added_lines(self, old_content, new_content):
+        # Gets just the added lines in the new content, as a string.
         buf = []
         old_lines = old_content.splitlines()
         new_lines = new_content.splitlines()

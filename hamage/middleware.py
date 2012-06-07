@@ -19,6 +19,7 @@ class HamageMiddleware(object):
             approved, msg = self.handle_post(environ, start_response)
             if not approved:
                 # TODO: config hook for response handler?
+                # Value provided should be a WSGI app?
                 # Or maybe rewrite REQUEST_METHOD to GET, call the app,
                 # and inject the message into form?
                 start_response('403 Forbidden', [('Content-type', 'text/plain')])
@@ -32,13 +33,14 @@ class HamageMiddleware(object):
         request = Request.from_wsgi_environ(environ)
         # TODO:
         # Config needs to tell us which keys to care about.
+        # And how to get author.
+        # Maybe assume REMOTE_USER is good?
         author = ''
 
         # Middleware has no way to get at existing data to know
         # if user is editing rather than creating;
         # so we treat all POSTs as new data.
         changes = []
-        import pdb; pdb.set_trace()
         try:
             filters.test(request, author, changes)
             return (True, '')
