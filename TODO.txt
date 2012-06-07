@@ -1,15 +1,16 @@
 * library API to call filters - DONE
  - tests - DONE
 
-* wsgi middleware to invoke filters - DONE
+* wsgi middleware to invoke filters
  - tests - DONE
+ - config to know which fields to use
 
 * use webob - DONE
   - tests - DONE
 
 * django proof of concept basic backend
   - persistent LogEntry - DONE
-  - django.contrib.comments support - DONE
+  - Request compatibility - DONE via twod.wsgi
 
 * wsgi form integration. guinea pig: the captcha/expression.py filter
  - tests
@@ -29,5 +30,7 @@
 
 * Training - PUNT
 
-* Log / training UI in django admin - PUNT
+* Training UI in django admin - PUNT
+
+* django.contrib.comments support - DONE BUT UNTESTED
 
