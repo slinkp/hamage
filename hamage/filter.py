@@ -1,6 +1,7 @@
 import re
 import logging
 import time
+import webob.request
 from cStringIO import StringIO
 from BeautifulSoup import UnicodeDammit
 from difflib import SequenceMatcher
@@ -25,48 +26,21 @@ def shorten_line(text, maxlen=75):
     return text[:cut] + ' ...'
 
 
-class Request(object):
-    """
-    TODO: what do we actually need here?
-    Use webob instead?
-    maybe see http://packages.python.org/twod.wsgi/manual/request-objects.html
-    for django compatibility?
-    """
-    def __init__(self, environ, headers):
-        headers = headers or {}
-        self.environ = environ.copy()  # The WSGI environment.
-        self.headers = {}  # HTTP headers
-        for key, value in headers.items():
-            self.headers[key.lower()] = value
 
-    @classmethod
-    def from_wsgi_environ(kls, environ):
-        """Factory to create a Request from a WSGI environment.
-        """
-        headers = dict([(key, val) for key, val in environ.items() if key.startswith('HTTP_')])
-        return kls(environ, headers)
-
-    # Making this up, TODO
-    def has_attachment(self):
-        return False
+class Request(webob.request.Request):
 
     #######################################
-    # Trac compatibility. TODO
-
-    # For compatibility w/ trac code; deprecate this
-    def get_header(self, key):
-        key = 'http_' + key.lower()
-        return self.headers[key]
+    # Trac compatibility. TODO can we get rid of these?
 
     @property
     def authname(self):
         # TODO: this should also be pluggable?
         # REMOTE_USER works with eg. repoze.who, but
         # our application may well do something different.
-        return self.environ.get('REMOTE_USER') or 'anonymous'
+        return self.remote_user or 'anonymous'
 
-    path_info = ''
-
+    def has_attachment(self):
+        pass
 
 class RejectContent(Exception):
     """Exception raised when content is rejected by a filter."""
@@ -94,7 +68,7 @@ class ExternalLinksFilterStrategy(object):
     def test(self, req, author, content, ip):
         num_ext = 0
         allowed = self.allowed_domains.copy()
-        allowed.add(req.get_header('Host'))
+        allowed.add(req.host)
 
         for host in self._URL_RE.findall(content):
             if host not in allowed:
@@ -298,7 +272,7 @@ class FilterGraph(object):
 
             for strategy in self.strategies:
                 if (self.use_external and self.train_external) or not strategy.is_external():
-                    strategy.train(Request(fakeenv, None),
+                    strategy.train(Request(fakeenv),
                                entry.author or 'anonymous',
                                entry.content, entry.ipnr, spam=spam)
 

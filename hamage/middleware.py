@@ -30,7 +30,7 @@ class HamageMiddleware(object):
     def handle_post(self, environ, start_response):
         from .filter import FilterGraph, Request, RejectContent
         filters = FilterGraph(self.config)
-        request = Request.from_wsgi_environ(environ)
+        request = Request(environ)
         # TODO:
         # Config needs to tell us which keys to care about.
         # And how to get author.

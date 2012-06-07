@@ -1,30 +1,14 @@
 import unittest
 import mock
 
-
-class TestRequest(unittest.TestCase):
-
-    def test__init(self):
-        from hamage.filter import Request
-        req = Request({}, {'OUCH': 'whee'})
-        self.assertEqual(req.headers['ouch'], 'whee')
-
-    def test_from_wsgi_environ(self):
-        from hamage.filter import Request
-        req = Request.from_wsgi_environ(
-            {'HTTP_FOO': 'bar',
-             'not_http': 'fleem'})
-
-        self.assertEqual(req.headers, {'http_foo': 'bar'})
-        self.assertEqual(req.environ, {'HTTP_FOO': 'bar', 'not_http': 'fleem'})
-
-
 class TestFilterGraph(unittest.TestCase):
 
-    def _request(self, environ={}, **headers):
-        from hamage.filter import Request
+    def _request(self, environ=None, **kw):
+        environ = environ or {}
+        kw.setdefault('path_info', '/')
         environ.setdefault('REMOTE_ADDR', '127.0.0.1')
-        req = Request(environ=environ, headers=headers)
+        from hamage.filter import Request
+        req = Request(environ=environ, **kw)
         return req
 
     def _make_one(self, options={}):
@@ -35,13 +19,13 @@ class TestFilterGraph(unittest.TestCase):
 
     def test_no_filters(self):
         graph = self._make_one()
-        req = self._request(http_host='example.org')
+        req = self._request(host='example.org')
         graph.strategies = []
         retval = graph.test(req, 'John Doe', [(None, 'Foo bar')])
         self.assertEqual(retval, (0, []))
 
     def test_trust_authenticated(self):
-        req = self._request(environ={'REMOTE_USER': 'john'},
+        req = self._request(remote_user='john',
                             path_info='/foo',
                             remote_addr='127.0.0.1')
         graph = self._make_one({'trust_authenticated': True})
@@ -52,7 +36,7 @@ class TestFilterGraph(unittest.TestCase):
         self.assertEqual(strategy.test.call_count, 0)
 
     def test_dont_trust_authenticated(self):
-        req = self._request(environ={'REMOTE_USER': 'john'},
+        req = self._request(remote_user='john',
                             path_info='/foo',
                             remote_addr='127.0.0.1')
         graph = self._make_one({'trust_authenticated': False})
@@ -89,7 +73,7 @@ class TestFilterGraph(unittest.TestCase):
     #     self.assertEqual('Test\n4 5 6', DummyStrategy(self.env).content)
 
     def test_bad_karma(self):
-        req = self._request(environ={}, path_info='/foo', authname='anonymous',
+        req = self._request(path_info='/foo', remote_user='anonymous',
                             remote_addr='127.0.0.1')
         strategy = mock.Mock()
         strategy.test.return_value = (-999, 'rejected by fred')
@@ -164,8 +148,8 @@ class TestFilterGraph(unittest.TestCase):
         entry.update = _update
 
         req = self._request(
-            environ={'SERVER_NAME': 'localhost', 'SERVER_PORT': '80', 'wsgi.url_scheme': 'http'},
-            path_info='/foo', authname='anonymous', remote_addr='127.0.0.1')
+            server_name='localhost', server_port='80', environ={'wsgi.url_scheme': 'http'},
+            path_info='/foo', remote_user='anonymous', remote_addr='127.0.0.1')
 
         graph = self._make_one()
         strategy = mock.Mock()
@@ -213,19 +197,19 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
         strategy = ExternalLinksFilterStrategy({})
         return strategy
 
-    def _request(self, **headers):
+    def _request(self, **kw):
         from hamage.filter import Request
-        req = Request(environ={}, headers=headers)
+        req = Request(environ={}, **kw)
         return req
 
     def test_no_links(self):
-        req = self._request(http_host='example.org')
+        req = self._request(host='example.org')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', 'Foo bar', '127.0.0.1')
         self.assertEqual(None, retval)
 
     def test_few_ext_links(self):
-        req = self._request(http_host='example.org')
+        req = self._request(host='example.org')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', '''
         <a href="http://spammers-site.com/fakehandbags">fakehandbags</a>
@@ -234,7 +218,7 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
         self.assertEqual(None, retval)
 
     def test_too_many_links(self):
-        req = self._request(http_host='127.0.0.1')
+        req = self._request(host='127.0.0.1')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', '''
         <a href="http://spammers-site.com/fakehandbags">fakehandbags</a>
@@ -250,7 +234,7 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
             )
 
     def test_many_ext_links_same_site(self):
-        req = self._request(http_host='127.0.0.1')
+        req = self._request(host='127.0.0.1')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', """
         <a href="http://example.org/page1">foo</a>
@@ -263,7 +247,7 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
         self.assertEqual(None, retval)
 
     def test_many_ext_links_raw(self):
-        req = self._request(http_host='127.0.0.1')
+        req = self._request(host='127.0.0.1')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', """
         http://spammers-site.com/fakehandbags
@@ -279,7 +263,7 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
         )
 
     def test_many_ext_links_bbcode(self):
-        req = self._request(http_host='127.0.0.1')
+        req = self._request(host='127.0.0.1')
         strategy = self._make_one()
         retval = strategy.test(req, 'John Doe', """
         [url=http://spammers-site.com/fakehandbags]fakehandbags[/url]
