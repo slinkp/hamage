@@ -12,8 +12,11 @@ import json
 import time
 
 class HamageEntry(models.Model):
+    """
+    hamagecontrol 'entry' storage for Django ORM.
+    """
 
-    time = models.DateTimeField()
+    time = models.DateTimeField(default=datetime.datetime.now)
 
     path = models.CharField(max_length=2000)
 
@@ -29,7 +32,7 @@ class HamageEntry(models.Model):
 
     rejected = models.BooleanField(help_text="Is it spam?")
 
-    score = models.IntegerField()
+    score = models.IntegerField('High = ham, low = spam')
 
     # Todo: allow assigning & returning a list
     reasons = models.TextField(help_text="json-encoded list of reasons this was ham/spam", blank=True, null=True)
@@ -42,24 +45,24 @@ class DjangoBackendFactory(object):
     def purge_entries(age):
         now = time.time()
         modtime = datetime.datetime.fromtimestamp(now - age)
-        HamageEntry.objects.filter(timestamp__lt=modtime).delete()
+        HamageEntry.objects.filter(time__lt=modtime).delete()
 
     @staticmethod
-    def make_entry(timestamp, path,
-                   author, is_authenticated,
-                   ip, headers, content,
-                   is_spam,
+    def make_entry(time, path,
+                   author, authenticated,
+                   ipnr, headers, content,
+                   rejected,
                    score,
                    reasons):
         entry = HamageEntry(
-            timestamp=datetime.datetime.fromtimestamp(timestamp),
+            time=datetime.datetime.fromtimestamp(time),
             path=path,
             author=author,
-            is_authenticated=is_authenticated,
-            ip=ip,
+            authenticated=authenticated,
+            ipnr=ipnr,
             headers=unicode(headers),
             content=content,
-            is_spam=is_spam,
+            rejected=rejected,
             score=score,
             reasons=json.dumps(reasons),
             )
@@ -75,10 +78,9 @@ from hamage.filter import Request, RejectContent
 class DjangoRequestWrapper(Request):
 
     def __init__(self, dj_req):
-        self.django_req = dj_req
         # Django puts all headers in META,
         # and (I think) also all the WSGI environ?
-        super(DjangoRequestWrapper, self).__init__(environ=dj_req.META, headers=dj_req.META) 
+        super(DjangoRequestWrapper, self).__init__(environ=dj_req.META)
 
     @property
     def remote_addr(self):
