@@ -22,8 +22,23 @@ class HamageMiddleware(object):
                 # Value provided should be a WSGI app?
                 # Or maybe rewrite REQUEST_METHOD to GET, call the app,
                 # and inject the message into form?
-                start_response('403 Forbidden', [('Content-type', 'text/plain')])
-                return [msg]
+                # start_response('403 Forbidden', [('Content-type', 'text/plain')])
+                # return [msg]
+
+                # This is easier with WebOb.
+                import pdb; pdb.set_trace()
+                from webob import Request
+                new_environ = environ.copy()
+                req = Request(new_environ)
+                req.method = 'GET'
+                import urlparse
+                form_path = urlparse.urlparse(req.referer).path
+                req.path_info = form_path
+                response = req.get_response(self.app)
+                response.body_file.write('\nhey what?\n')
+                start_response(response.status, response.headerlist)
+                return response.app_iter
+
         # TODO: handle rewriting forms?
         return self.app(environ, start_response)
 
