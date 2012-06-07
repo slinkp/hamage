@@ -28,7 +28,9 @@ def shorten_line(text, maxlen=75):
 
 
 class Request(webob.request.Request):
-
+    """
+    Thin wrapper around webob.Request.
+    """
     #######################################
     # Trac compatibility. TODO can we get rid of these?
 
@@ -54,7 +56,7 @@ class ExternalLinksFilterStrategy(object):
     def __init__(self, config):
         self.karma_points = int(config.get('extlinks_karma', 2))
         self.max_links = int(config.get('extlinks_max_links', 4))
-        self.allowed_domains = config.get('extlink_allowed_domains',
+        self.allowed_domains = config.get('extlinks_allowed_domains',
                                           set(['example.com', 'example.org'])
                                           )
 
@@ -76,7 +78,9 @@ class ExternalLinksFilterStrategy(object):
                 num_ext += 1
             else:
                 logger.debug('"%s" is whitelisted.' % host)
+        return self._score(num_ext)
 
+    def _score(self, num_ext):
         if num_ext > self.max_links:
             if(self.max_links > 0):
                 return -abs(self.karma_points) * num_ext / self.max_links, \
@@ -84,6 +88,7 @@ class ExternalLinksFilterStrategy(object):
             else:
                 return -abs(self.karma_points) * num_ext, \
                        'External links in post found'
+        return None
 
     def train(self, req, author, content, ip, spam=True):
         pass

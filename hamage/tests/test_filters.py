@@ -278,6 +278,37 @@ class TestExternalLinksFilterStrategy(unittest.TestCase):
             retval
         )
 
+    def test_scoring_with_max_links(self):
+        strategy = self._make_one()
+        strategy.max_links = 4
+        strategy.karma_points = 3
+        self.assertEqual(strategy._score(0), None)
+        self.assertEqual(strategy._score(1), None)
+        self.assertEqual(strategy._score(4), None)
+        self.assertEqual(strategy._score(5),
+                         (-4, 'Maximum number of external links per post exceeded'))
+        # It's linear w/ number of links, but scaled down by max_links.
+        self.assertEqual(strategy._score(100),
+                         (-75, 'Maximum number of external links per post exceeded'))
+        self.assertEqual(strategy._score(200),
+                         (-150, 'Maximum number of external links per post exceeded'))
+
+    def test_scoring_without_max_links(self):
+        strategy = self._make_one()
+        strategy.max_links = 0
+        strategy.karma_points = 3
+        self.assertEqual(strategy._score(0), None)
+        strategy.max_links = -1
+        self.assertEqual(strategy._score(0),
+                         (0, 'External links in post found'))
+        self.assertEqual(strategy._score(1),
+                         (-3, 'External links in post found'))
+        # It's linear w/ number of links.
+        self.assertEqual(strategy._score(100),
+                         (-300, 'External links in post found'))
+        self.assertEqual(strategy._score(200),
+                         (-600, 'External links in post found'))
+
 
 
 if __name__ == '__main__':
