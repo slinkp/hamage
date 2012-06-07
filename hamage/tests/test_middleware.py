@@ -1,11 +1,13 @@
 import unittest
 import mock
+from hamage.filter import Request
 
 class TestMiddleware(unittest.TestCase):
 
     def _make_one(self, config):
         from hamage.middleware import HamageMiddleware
         self.mock_app = mock.Mock()
+        self.mock_app.return_value=['test body']
         self.start_response = mock.Mock()
         return HamageMiddleware(self.mock_app, config)
 
@@ -18,7 +20,7 @@ class TestMiddleware(unittest.TestCase):
 
     def test_POST__approved(self):
         middleware = self._make_one({'options': {}})
-        middleware.handle_post = lambda environ, start_response: (True, 'ok')
+        middleware.handle_post = lambda request: (True, 'ok')
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
         middleware(env, self.start_response)
@@ -27,9 +29,10 @@ class TestMiddleware(unittest.TestCase):
 
     def test_POST__rejected(self):
         middleware = self._make_one({'options': {}})
-        middleware.handle_post = lambda environ, start_response: (False, 'bad')
+        middleware.handle_post = lambda request: (False, 'bad')
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
+        middleware.handle_spam = mock.Mock()
         middleware(env, self.start_response)
         self.assertEqual(self.mock_app.call_count, 0)
         self.assertEqual(self.start_response.call_count, 1)
@@ -40,17 +43,39 @@ class TestMiddleware(unittest.TestCase):
         middleware = self._make_one({'options': {}})
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
+        request = Request.blank('/', env)
         mockFilterGraph.test.return_value = True
-        middleware.handle_post(env, self.start_response)
+        result = middleware.handle_post(request)
+        self.assertEqual(result, (True, ''))
 
-    @mock.patch('hamage.filter.FilterGraph')
+    @mock.patch('hamage.middleware.FilterGraph')
     def test_handle_post__nope(self, mockFilterGraph):
         middleware = self._make_one({'options': {}})
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
+        request = Request.blank('/', env)
         from hamage.filter import RejectContent
         mockFilterGraph.return_value.test.side_effect = RejectContent('oh no')
-        middleware.handle_post(env, self.start_response)
+
+        result = middleware.handle_post(request)
+        self.assertEqual(result, (False, 'oh no'))
+
+
+    def test_handle_spam(self):
+        middleware = self._make_one({'options': {}})
+        env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
+               'HTTP_HOST': 'localhost'}
+        request = Request.blank('/', env)
+
+        def app_side_effect(environ, start_response):
+            # need this to make webob.Request.get_response(app) happy
+            start_response('200 OK', headers=[])
+            return ['This is the response body']
+
+        middleware.app.side_effect = app_side_effect
+        middleware.handle_spam(request)
+        # TODO: what to assert now?
+
 
 if __name__ == '__main__':
     unittest.main()
