@@ -12,14 +12,21 @@
   - persistent LogEntry - DONE
   - Request compatibility - DONE via twod.wsgi
 
-* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
- - tests
-
 * config the filter chain
   - via entry point name at instantiation - OK
     - with tests
-  - django settings
-  - pyramid (paste ini file?)
+  - django settings - OK
+  - pyramid (paste ini file?) - PUNT
+
+* github repo - OK
+
+* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
+ - tests
+
+* consistent logging a la:
+  "ip 123.456.789.012: ExternalLinksFilterStrategy FAIL karma -9"
+  "ip 123.456.789.012: SomeOtherFilterStrategy PASS karma 1"
+
 
 * get more filters working
   - with logs
@@ -35,3 +42,6 @@
 
 * django.contrib.comments support - DONE BUT UNTESTED
 
+* github repo for demo
+
+* style the demo
