@@ -122,12 +122,13 @@ class FilterGraph(object):
         self.logging_enabled = bool(config.get('logging_enabled', True))
 
         # The number of days after which log entries should be purged.
+        # TODO unused.
         self.purge_age = int(config.get('purge_age', '7'))
 
         # Allow usage of external services.
         self.use_external = bool(config.get('use_external', True))
 
-        #"""Allow training of external services.""")
+        # Allow training of external services.
         self.train_external = bool(config.get('train_external', True))
 
         # Whether content submissions by authenticated users should be

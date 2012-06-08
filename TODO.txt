@@ -3,7 +3,7 @@
 
 * wsgi middleware to invoke filters
  - tests - DONE
- - config to know which fields to use
+ - config to know which fields to use - DONE
 
 * use webob - DONE
   - tests - DONE
@@ -12,7 +12,7 @@
   - persistent LogEntry - DONE
   - Request compatibility - DONE via twod.wsgi
 
-* wsgi form integration. guinea pig: the captcha/expression.py filter
+* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
  - tests
 
 * config the filter chain
