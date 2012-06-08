@@ -71,9 +71,13 @@ class FilterSystem(object):
     def __init__(self, config):
         self.log = logger
 
-        self.strategies = [get_filter('hamage_extlinks')(config)]
+        self.config = config['options']
 
-        self.config = config = config['options']
+        self.strategies = []
+        for name in config['filters']:
+            self.strategies.append(get_filter(name)(config))
+
+        config = self.config
 
         # The minimum score required for a submission to be allowed
         self.min_karma = int(config.get('min_karma', 0))

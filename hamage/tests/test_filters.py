@@ -11,9 +11,10 @@ class TestFilterSystem(unittest.TestCase):
         req = Request(environ=environ, **kw)
         return req
 
-    def _make_one(self, options={}):
+    def _make_one(self, options=None):
+        options = options or {}
         from hamage.filter import FilterSystem
-        filtersys = FilterSystem({'options': options})
+        filtersys = FilterSystem({'options': options, 'filters': []})
         filtersys._backend_factory = mock.Mock()
         return filtersys
 
