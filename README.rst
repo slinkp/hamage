@@ -7,10 +7,10 @@ Configuration
 Creating Filters
 ===================
 
-A Filter is a class with these methods:
+A Filter is a class with these methods::
 
 
-class MyFilterStrategy(object):
+ class MyFilterStrategy(object):
 
     def __init__(self, config):
        """Create a new instance. config is a dictionary."""
@@ -38,7 +38,7 @@ class MyFilterStrategy(object):
         """
 
 Once that's done, you need to register an entry point for it.
-In your setup.py, do this:
+In your setup.py, do this::
 
       entry_points={
           'hamage_filters': [
@@ -52,7 +52,7 @@ Creating Backends
 
 TODO
 
-Once you've made one, register an entry point in your setup.py:
+Once you've made one, register an entry point in your setup.py::
 
       entry_points={
           'hamage_backends: [
