@@ -8,9 +8,13 @@ setup(name='hamagecontrol',
       description="",
       long_description="""\
 """,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
-      author='Paul M. Winkler',
+      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[
+          'License :: OSI Approved :: BSD License',
+      ],
+
+      keywords='spam',
+      author='Edgewall Software, Christopher Lenz, Paul M. Winkler',
       author_email='slinkp@gmail.com',
       url='',
       license='BSD',

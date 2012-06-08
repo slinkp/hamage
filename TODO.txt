@@ -18,7 +18,16 @@
   - django settings - OK
   - pyramid (paste ini file?) - PUNT
 
+* dependencies in setup.py!
+
 * github repo - OK
+
+* credits - "Edgewall Software" - and largely Christopher Lenz (his name is
+  nowhere on it!)
+
+* license - BSD
+
+* fill in missing slides
 
 * wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
  - tests
