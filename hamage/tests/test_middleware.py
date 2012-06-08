@@ -38,24 +38,25 @@ class TestMiddleware(unittest.TestCase):
         self.assertEqual(self.start_response.call_count, 1)
 
 
-    @mock.patch('hamage.filter.FilterGraph')
-    def test_handle_post__ok(self, mockFilterGraph):
+    @mock.patch('hamage.middleware.FilterSystem')
+    def test_handle_post__ok(self, mockFilterSystem):
         middleware = self._make_one({'options': {}})
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
         request = Request.blank('/', env)
-        mockFilterGraph.test.return_value = True
+        mockFilterSystem.test.return_value = True
+        mockFilterSystem._backend_factory = mock.Mock()
         result = middleware.handle_post(request)
         self.assertEqual(result, (True, ''))
 
-    @mock.patch('hamage.middleware.FilterGraph')
-    def test_handle_post__nope(self, mockFilterGraph):
+    @mock.patch('hamage.middleware.FilterSystem')
+    def test_handle_post__nope(self, mockFilterSystem):
         middleware = self._make_one({'options': {}})
         env = {'REQUEST_METHOD': 'POST', 'REMOTE_ADDR': '127.0.0.1',
                'HTTP_HOST': 'localhost'}
         request = Request.blank('/', env)
         from hamage.filter import RejectContent
-        mockFilterGraph.return_value.test.side_effect = RejectContent('oh no')
+        mockFilterSystem.return_value.test.side_effect = RejectContent('oh no')
 
         result = middleware.handle_post(request)
         self.assertEqual(result, (False, 'oh no'))

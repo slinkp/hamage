@@ -3,7 +3,7 @@
 WSGI middleware for spam detection.
 
 """
-from .filter import FilterGraph, Request, RejectContent
+from .filter import FilterSystem, Request, RejectContent
 
 class HamageMiddleware(object):
 
@@ -45,7 +45,7 @@ class HamageMiddleware(object):
         """This takes a WebOb request and returns spam status and
         reason(s) as (bool, str).
         """
-        filters = FilterGraph(self.config)
+        filters = FilterSystem(self.config)
 
         author = request.POST.get(self.path_config.get('author_field', 'name')) or u''
 

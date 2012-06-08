@@ -20,7 +20,13 @@ setup(name='hamagecontrol',
       install_requires=[
           # -*- Extra requirements: -*-
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
-      )
+      entry_points={
+          # -*- Entry points: -*-
+          'hamage_filters': [
+              'hamage_extlinks = hamage.filters.extlinks:ExternalLinksFilterStrategy',
+              ],
+          'hamage_backends': [
+              'django_orm = hamage.backends.django_hamage.models:DjangoBackendFactory',
+              ],
+      },
+    )

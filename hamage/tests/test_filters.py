@@ -1,7 +1,7 @@
 import unittest
 import mock
 
-class TestFilterGraph(unittest.TestCase):
+class TestFilterSystem(unittest.TestCase):
 
     def _request(self, environ=None, **kw):
         environ = environ or {}
@@ -12,26 +12,26 @@ class TestFilterGraph(unittest.TestCase):
         return req
 
     def _make_one(self, options={}):
-        from hamage.filter import FilterGraph
-        graph = FilterGraph({'options': options})
-        graph._backend_factory = mock.Mock()
-        return graph
+        from hamage.filter import FilterSystem
+        filtersys = FilterSystem({'options': options})
+        filtersys._backend_factory = mock.Mock()
+        return filtersys
 
     def test_no_filters(self):
-        graph = self._make_one()
+        filtersys = self._make_one()
         req = self._request(host='example.org')
-        graph.strategies = []
-        retval = graph.test(req, 'John Doe', [(None, 'Foo bar')])
+        filtersys.strategies = []
+        retval = filtersys.test(req, 'John Doe', [(None, 'Foo bar')])
         self.assertEqual(retval, (0, []))
 
     def test_trust_authenticated(self):
         req = self._request(remote_user='john',
                             path_info='/foo',
                             remote_addr='127.0.0.1')
-        graph = self._make_one({'trust_authenticated': True})
+        filtersys = self._make_one({'trust_authenticated': True})
         strategy = mock.Mock()
-        graph.strategies = [strategy]
-        retval = graph.test(req, '', [])
+        filtersys.strategies = [strategy]
+        retval = filtersys.test(req, '', [])
         self.assertEqual(retval, (float('inf'), ['trusting authenticated user']))
         self.assertEqual(strategy.test.call_count, 0)
 
@@ -39,11 +39,11 @@ class TestFilterGraph(unittest.TestCase):
         req = self._request(remote_user='john',
                             path_info='/foo',
                             remote_addr='127.0.0.1')
-        graph = self._make_one({'trust_authenticated': False})
+        filtersys = self._make_one({'trust_authenticated': False})
         strategy = mock.Mock()
         strategy.test.return_value = (999, ['message'])
-        graph.strategies = [strategy]
-        retval = graph.test(req, '', [])
+        filtersys.strategies = [strategy]
+        retval = filtersys.test(req, '', [])
         # By default get 10 points for authenticating.
         expected = [('AuthenticatedUserScore', 10, 'User is authenticated'),
                     ('Mock', 999, ['message'])]
@@ -77,12 +77,12 @@ class TestFilterGraph(unittest.TestCase):
                             remote_addr='127.0.0.1')
         strategy = mock.Mock()
         strategy.test.return_value = (-999, 'rejected by fred')
-        graph = self._make_one({'trust_authenticated': False})
-        graph.strategies = [strategy]
-        graph.reject_handler = mock.Mock()
-        retval = graph.test(req, '', [])
+        filtersys = self._make_one({'trust_authenticated': False})
+        filtersys.strategies = [strategy]
+        filtersys.reject_handler = mock.Mock()
+        retval = filtersys.test(req, '', [])
         self.assertEqual(retval, (-999, [('Mock', -999, 'rejected by fred')]))
-        self.assertEqual(graph.reject_handler.reject_content.call_count, 1)
+        self.assertEqual(filtersys.reject_handler.reject_content.call_count, 1)
 
     # def test_good_karma(self):
     #     req = Mock(environ={}, path_info='/foo', authname='anonymous',
@@ -151,12 +151,12 @@ class TestFilterGraph(unittest.TestCase):
             server_name='localhost', server_port='80', environ={'wsgi.url_scheme': 'http'},
             path_info='/foo', remote_user='anonymous', remote_addr='127.0.0.1')
 
-        graph = self._make_one()
+        filtersys = self._make_one()
         strategy = mock.Mock()
-        graph.strategies = [strategy]
-        graph.backend_factory.get.return_value = entry
+        filtersys.strategies = [strategy]
+        filtersys.backend_factory.get.return_value = entry
 
-        graph.train(req, entry.id, spam=True)
+        filtersys.train(req, entry.id, spam=True)
 
         self.assertEqual(strategy.train.call_count, 1)
         # First arg is a constructed Request, not sure what to test about it.
@@ -193,7 +193,7 @@ class TestFilterGraph(unittest.TestCase):
 class TestExternalLinksFilterStrategy(unittest.TestCase):
 
     def _make_one(self):
-        from hamage.filter import ExternalLinksFilterStrategy
+        from hamage.filters.extlinks import ExternalLinksFilterStrategy
         strategy = ExternalLinksFilterStrategy({})
         return strategy
 

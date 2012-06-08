@@ -5,6 +5,7 @@ import webob.request
 from cStringIO import StringIO
 from BeautifulSoup import UnicodeDammit
 from difflib import SequenceMatcher
+from pkg_resources import iter_entry_points
 
 logger = logging.getLogger('hamage.filter')
 
@@ -48,53 +49,18 @@ class RejectContent(Exception):
     """Exception raised when content is rejected by a filter."""
 
 
-class ExternalLinksFilterStrategy(object):
-    """Spam filter strategy that reduces the karma of a submission if the
-    content contains too many links to external sites.
-    """
+def get_filters():
+    return iter_entry_points('hamage_filters')
 
-    def __init__(self, config):
-        self.karma_points = int(config.get('extlinks_karma', 2))
-        self.max_links = int(config.get('extlinks_max_links', 4))
-        self.allowed_domains = config.get('extlinks_allowed_domains',
-                                          set(['example.com', 'example.org'])
-                                          )
-
-    _URL_RE = re.compile('https?://([^/]+)/?', re.IGNORECASE)
-
-    # IFilterStrategy methods
-
-    def is_external(self):
-        return False
-
-    def test(self, req, author, content, ip):
-        num_ext = 0
-        allowed = self.allowed_domains.copy()
-        allowed.add(req.host)
-
-        for host in self._URL_RE.findall(content):
-            if host not in allowed:
-                logger.debug('"%s" is not in extlink_allowed_domains' % host)
-                num_ext += 1
-            else:
-                logger.debug('"%s" is whitelisted.' % host)
-        return self._score(num_ext)
-
-    def _score(self, num_ext):
-        if num_ext > self.max_links:
-            if(self.max_links > 0):
-                return -abs(self.karma_points) * num_ext / self.max_links, \
-                       'Maximum number of external links per post exceeded'
-            else:
-                return -abs(self.karma_points) * num_ext, \
-                       'External links in post found'
+def get_filter(name):
+    try:
+        filt = list(iter_entry_points('hamage_filters', name=name))[0]
+    except IndexError:
         return None
-
-    def train(self, req, author, content, ip, spam=True):
-        pass
+    return filt.load()
 
 
-class FilterGraph(object):
+class FilterSystem(object):
 
     def request_wrapper(self, request):
         """Subclasses can override this to adapt a framework-native request
@@ -105,11 +71,9 @@ class FilterGraph(object):
     def __init__(self, config):
         self.log = logger
 
-        # TODO: entry points
-        # http://stackoverflow.com/questions/774824/explain-python-entry-points
-        self.strategies = [ExternalLinksFilterStrategy(config)]
+        self.strategies = [get_filter('hamage_extlinks')(config)]
 
-        config = config['options']
+        self.config = config = config['options']
 
         # The minimum score required for a submission to be allowed
         self.min_karma = int(config.get('min_karma', 0))
@@ -148,11 +112,13 @@ class FilterGraph(object):
     @property
     def backend_factory(self):
         """Persistence system for storing entries, ... what else?
-         TODO: this should be an entry point passed by config?
-         """
+        Looked up via self.config['backend_factory'] which should
+        name an entry point in the 'hamage_backends' group.
+        """
         if self._backend_factory is None:
-            from .backends.django_hamage.models import DjangoBackendFactory
-            self._backend_factory = DjangoBackendFactory
+            name = self.config['backend_factory']
+            backend = list(iter_entry_points('hamage_backends', name=name))[0]
+            self._backend_factory = backend
         return self._backend_factory
 
     # IRejectHandler methods
