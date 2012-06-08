@@ -16,7 +16,8 @@
  - tests
 
 * config the filter chain
-  - manually at instantiation
+  - via entry point name at instantiation - OK
+    - with tests
   - django settings
   - pyramid (paste ini file?)
 

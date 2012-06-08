@@ -70,7 +70,7 @@ class DjangoBackendFactory(object):
 
 
 # TODO move this.
-from hamage.filter import FilterGraph
+from hamage.filter import FilterSystem
 
 # TODO move this.
 from hamage.filter import Request, RejectContent
@@ -87,10 +87,10 @@ class DjangoRequestWrapper(Request):
         # TODO get remote address if set, IP if not? Check what trac does
         return '127.0.0.1'
 
-class DjangoFilterGraph(FilterGraph):
+class DjangoFilterSystem(FilterSystem):
     def __init__(self):
         from django.conf import settings
-        super(DjangoFilterGraph, self).__init__(config=settings.HAMAGE_CONFIG)
+        super(DjangoFilterSystem, self).__init__(config=settings.HAMAGE_CONFIG)
 
     backend_factory = DjangoBackendFactory
 

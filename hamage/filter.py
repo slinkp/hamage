@@ -75,7 +75,7 @@ class FilterSystem(object):
 
         self.strategies = []
         for name in config['filters']:
-            self.strategies.append(get_filter(name)(config))
+            self.strategies.append(get_filter(name)(self.config))
 
         config = self.config
 
@@ -122,7 +122,7 @@ class FilterSystem(object):
         if self._backend_factory is None:
             name = self.config['backend_factory']
             backend = list(iter_entry_points('hamage_backends', name=name))[0]
-            self._backend_factory = backend
+            self._backend_factory = backend.load()
         return self._backend_factory
 
     # IRejectHandler methods
