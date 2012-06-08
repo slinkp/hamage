@@ -23,6 +23,10 @@ setup(name='hamagecontrol',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
+          'BeautifulSoup',
+          'setuptools',
+          'webob',
+          'mock',
       ],
       entry_points={
           # -*- Entry points: -*-
