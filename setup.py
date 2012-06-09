@@ -27,6 +27,7 @@ setup(name='hamagecontrol',
           'setuptools',
           'webob',
           'mock',
+          'formencode',
       ],
       entry_points={
           # -*- Entry points: -*-
