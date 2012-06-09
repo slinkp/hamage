@@ -7,6 +7,9 @@ the web.  Usable as WSGI middleware, or as a library.
 
 It's early. Needs a lot more docs :)
 
+A PDF presentation with more background is here:
+https://github.com/slinkp/pygotham_hamage_demo/blob/e5b5f24c742c13eb7eaca9569f7205d482c03c04/pygotham2_hamage_slides.pdf?raw=true
+
 Configuration
 =============
 
