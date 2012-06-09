@@ -24,6 +24,10 @@ DONE
 * credits - "Edgewall Software" - and largely Christopher Lenz (his name is
   nowhere on it!)
 
+* fill in missing slides
+
+* style the demo
+
 
 UNTESTED
 =========
@@ -45,17 +49,20 @@ UNTESTED
 TODO
 ========
 
+* wsgi errors: better placement control. Like a css path expression a
+  la jquery?  Or ... maybe instead specify  path to a form and we just
+  inject at start of that form?
+
 * wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
  - tests
 
-* fill in missing slides
+* filter init params in the configuration
+
+* wsgi middleware: multiple forms per page?
 
 * get more filters working
-  - with logs
+  - with logging
   - with tests
-
-
-* style the demo
 
 
 PUNT
