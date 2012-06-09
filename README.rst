@@ -1,7 +1,17 @@
+==============
+Hamage Control
+==============
+
+Prototype of a flexible, configurable, pluggable anti-spam system for
+the web.  Usable as WSGI middleware, or as a library.
+
+It's early. Needs a lot more docs :)
+
 Configuration
 =============
 
-
+Basically you instantiate FilterSystem with a config dictionary.
+See FilterSystem.__init__ docstring for a list of keys it checks for.
 
 
 Creating Filters
@@ -50,9 +60,36 @@ In your setup.py, do this::
 Creating Backends
 ===================
 
-TODO
+Backends allow Hamage to use arbitrary data stores to log
+and retrieve info about POST requests that came in.
+Useful for admin moderation (TODO), IP throttling, etc.
 
-Once you've made one, register an entry point in your setup.py::
+Backends are classes with these methods::
+
+ class MyBackend(object):
+
+    def purge_entries(self, age):
+        """Remove old recorded POST data from your data store.
+        """
+
+    def make_entry(self, time, path,
+                   author, authenticated,
+                   ipnr, headers, content,
+                   rejected,
+                   score,
+                   reasons):
+        """Store data about a POST request in your data store."""
+
+    def get_log_entry(self, id):
+        """Return a log entry with the given id. Useful for training, etc"""
+
+
+
+There's currently one experimental Django backend under
+backends/django_hamage/
+
+To register a class as a backend, you have to make an entry point in
+your setup.py::
 
       entry_points={
           'hamage_backends: [

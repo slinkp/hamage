@@ -80,6 +80,7 @@ class DjangoRequestWrapper(Request):
     def __init__(self, dj_req):
         # Django puts all headers in META,
         # and (I think) also all the WSGI environ?
+        # Not needed if using twod.wsgi, but it is otherwise
         super(DjangoRequestWrapper, self).__init__(environ=dj_req.META)
 
     @property

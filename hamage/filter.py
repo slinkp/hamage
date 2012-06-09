@@ -1,4 +1,3 @@
-import re
 import logging
 import time
 import webob.request
@@ -87,6 +86,7 @@ class FilterSystem(object):
 
         # Whether all content submissions and spam filtering activity should
         # be logged to the database.
+        # Needed by some filters, notably the IP throttle.
         self.logging_enabled = bool(config.get('logging_enabled', True))
 
         # The number of days after which log entries should be purged.
@@ -104,9 +104,11 @@ class FilterSystem(object):
         self.trust_authenticated = bool(config.get('trust_authenticated', True))
 
         # The karma given to attachments.
+        # TODO unused.
         self.attachment_karma = int(config.get('attachment_karma', '0'))
 
         # The handler used to reject content.
+        # Just needs a reject_content(req, message) method.
         self.reject_handler = self
         self._backend_factory = None
 
@@ -140,7 +142,8 @@ class FilterSystem(object):
     # Public methods
     def test(self, req, author, changes):
         """Test a submission against the registered filter strategies.
-        Returns (score, [reasons]) or raises RejectContent.
+        Returns (score, [reasons]) or raises RejectContent when the
+        score is less than ``self.min_karma``.
 
         @param req: the request object
         @param author: the name of the logged in user, or 'anonymous' if the
@@ -182,6 +185,11 @@ class FilterSystem(object):
             try:
                 if self.use_external or not strategy.is_external():
                     retval = strategy.test(req, author, content, ip)
+                    failpass = 'FAIL' if (retval and retval[0] < 0) else 'PASS'
+                    karma = retval[0] if retval else 0
+                    # Log lines like '127.0.0.1: ExternalLinksFilter FAIL karma -999'
+                    message = '%s: %s %s karma %s' % (ip, strategy.__class__.__name__, failpass, karma)
+                    self.log.info(message)
             except Exception, e:
                 self.log.exception('Filter strategy raised exception: %s', e)
             else:
@@ -196,6 +204,7 @@ class FilterSystem(object):
                                         reason))
 
         if self.logging_enabled:
+            # TODO if we use webob we can just do headers = req.headers
             headers = '\n'.join(['%s: %s' % (k[5:].replace('_', '-').title(), v)
                                  for k, v in req.environ.items()
                                  if k.startswith('HTTP_')])

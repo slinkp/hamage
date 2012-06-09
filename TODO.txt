@@ -1,3 +1,6 @@
+DONE
+======
+
 * library API to call filters - DONE
  - tests - DONE
 
@@ -12,34 +15,52 @@
   - persistent LogEntry - DONE
   - Request compatibility - DONE via twod.wsgi
 
-* config the filter chain
-  - via entry point name at instantiation - OK
-    - with tests
-  - django settings - OK
-  - pyramid (paste ini file?) - PUNT
-
-* dependencies in setup.py!
-
 * github repo - OK
+
+* license - BSD - OK
+
+* github repo for demo & slides - OK
 
 * credits - "Edgewall Software" - and largely Christopher Lenz (his name is
   nowhere on it!)
 
-* license - BSD
 
-* fill in missing slides
+UNTESTED
+=========
 
-* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
- - tests
+* config the filter chain
+  - via entry point name at instantiation - UNTESTED
+  - django settings - UNTESTED
+
+* django.contrib.moderation support - OK, in the demo app, but UNTESTED
+  and it's bad user experience.
 
 * consistent logging a la:
   "ip 123.456.789.012: ExternalLinksFilterStrategy FAIL karma -9"
   "ip 123.456.789.012: SomeOtherFilterStrategy PASS karma 1"
 
+* dependencies in setup.py!
+
+
+TODO
+========
+
+* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
+ - tests
+
+* fill in missing slides
 
 * get more filters working
   - with logs
   - with tests
+
+
+* style the demo
+
+
+PUNT
+=======
+* config the filter chain via pyramid / paste ini file
 
 * think about middleware working w/ AJAX
 
@@ -48,9 +69,3 @@
 * Training - PUNT
 
 * Training UI in django admin - PUNT
-
-* django.contrib.comments support - DONE BUT UNTESTED
-
-* github repo for demo
-
-* style the demo
