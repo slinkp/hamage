@@ -4,6 +4,8 @@ WSGI middleware for spam detection.
 
 """
 from .filter import FilterSystem, Request, RejectContent
+import logging
+logger = logging.getLogger('hamage.middleware')
 
 class HamageMiddleware(object):
 
@@ -89,6 +91,7 @@ class HamageMiddleware(object):
         new_request.method = 'GET'
         form_path = urlparse.urlparse(request.referer).path
         new_request.path_info = form_path
+        logger.info("will GET form from %s" % form_path)
         new_request.referer = request.referer
         response = new_request.get_response(self.app)
         form = response.body
