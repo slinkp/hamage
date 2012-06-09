@@ -49,12 +49,14 @@ UNTESTED
 TODO
 ========
 
+* wsgi form integration. guinea pig: the captcha/expression.py filter?
+ - low-level tests
+ - register entry point
+ - try it on a form
+
 * wsgi errors: better placement control. Like a css path expression a
   la jquery?  Or ... maybe instead specify  path to a form and we just
   inject at start of that form?
-
-* wsgi form integration. guinea pig: recaptcha? the captcha/expression.py filter?
- - tests
 
 * filter init params in the configuration
 
